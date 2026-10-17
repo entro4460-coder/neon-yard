@@ -37,3 +37,13 @@ npm start
 ## 참고
 
 현재 맵은 박스 기반 충돌/레이캐스트 구조입니다. 계단형 구조물은 점프를 통해 올라가는 방식이며, 완전한 건물 내부·문·엘리베이터·네트워크 지연 보정은 포함하지 않습니다. 브라우저/기기별 실제 멀티플레이 부하 테스트는 배포 후 별도로 확인해야 합니다.
+
+
+## FPS armory update
+- Weapon selection is submitted with the join request and validated by the server. Rifle, sidearm, and melee slots map to the selected K2C1/M4A1/AUG, Desert Eagle variants, and Gurkha/field knives.
+- Each weapon has server-side damage, fire interval, magazine/reserve, reload duration, range, and tracer-speed settings; recoil and handling are applied client-side from the same per-weapon profile.
+- The armory now renders a procedural low-poly Three.js model in a slow rotating 3D preview, rather than using the reference images as the in-game display. The same model builder is used for the first-person weapon.
+- Right mouse enables ADS (narrower FOV and reduced recoil); Ctrl crouches and lowers the camera and server-side shot origin. Knife variants have distinct damage, swing timing, range, and swing animation.
+- The map adds road surfaces, lane marks, and neon skyline dressing to make the arena read more like a compact urban combat zone.
+
+Note: these are stylized procedural 3D meshes, not imported production-grade CAD/game-asset models. A full browser and live multiplayer playtest is still recommended before deployment.

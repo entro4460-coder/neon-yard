@@ -14,7 +14,7 @@
   <section id="loadout" class="loadout-panel">
     <div class="loadout-head"><div><span class="eyebrow">NEON YARD // ARMORY</span><h2>CHOOSE YOUR LOADOUT</h2><p>전투에 투입되기 전 장비를 선택하십시오.</p></div><div class="armory-mark">NY<span> / 01</span></div></div>
     <div class="loadout-tabs"><button class="loadout-tab active" data-category="rifle">RIFLES</button><button class="loadout-tab" data-category="pistol">SIDEARMS</button><button class="loadout-tab" data-category="knife">MELEE</button></div>
-    <div id="weapon-cards" class="weapon-cards"></div>
+    <div class="weapon-showcase"><div class="showcase-viewport"><canvas id="weapon-preview"></canvas><span class="preview-tag">3D WEAPON / LIVE PREVIEW</span></div><div class="showcase-stats"><span class="eyebrow">FIELD DATA</span><h3 id="preview-name">K2C1</h3><div id="preview-desc">BALANCED ASSAULT RIFLE</div><div class="stat-list" id="preview-stats"></div><p class="preview-note">모델은 참고 이미지를 바탕으로 게임 내에서 절차적으로 제작한 로우폴리 3D 모델입니다.</p></div></div><div id="weapon-cards" class="weapon-cards"></div>
     <div class="loadout-footer"><div><small>SELECTED LOADOUT</small><strong id="selected-loadout">K2C1 / DESERT EAGLE BLACK / GURKHA KNIFE</strong></div><button id="confirm-loadout">CONFIRM LOADOUT ↗</button></div>
   </section>
   <section class="panel">
@@ -33,6 +33,8 @@
       <dt>Shift</dt><dd>달리기</dd>
       <dt>Space</dt><dd>점프</dd>
       <dt>마우스</dt><dd>시점 / 왼쪽 클릭 사격</dd>
+      <dt>우클릭</dt><dd>정조준 (ADS)</dd>
+      <dt>Ctrl</dt><dd>웅크리기</dd>
       <dt>1 / 2 / 3</dt><dd>소총 / 권총 / 칼 전환</dd>
       <dt>R</dt><dd>재장전</dd>
       <dt>Tab</dt><dd>킬보드</dd>
@@ -57,9 +59,13 @@
 </div>
 <script>
 (() => {
- const catalog={rifle:[['K2C1','K2C1.jpg','BALANCED RIFLE','Reliable handling / 30 RDS'],['M4A1','M4A1.jpg','ASSAULT RIFLE','Fast follow-up fire / 30 RDS'],['AUG','AUG.jpg','PRECISION RIFLE','Stable sight picture / 30 RDS']],pistol:[['DESERT EAGLE BLACK','DESET.jpg','HEAVY SIDEARM','High impact / 7 RDS'],['DESERT EAGLE WHITE','DESET.jpg','WHITE VARIANT','Same performance / 7 RDS']],knife:[['GURKHA KNIFE','구르카.jpg','HEAVY MELEE','Wide blade profile'],['FIELD KNIFE','야전칼.jpg','TACTICAL MELEE','Compact field design']]};
- const chosen={rifle:'K2C1',pistol:'DESERT EAGLE BLACK',knife:'GURKHA KNIFE'};let category='rifle';const cards=document.getElementById('weapon-cards'),label=document.getElementById('selected-loadout');
- function render(){cards.innerHTML='';catalog[category].forEach((w,i)=>{const b=document.createElement('button');b.className='weapon-card'+(chosen[category]===w[0]?' selected':'');b.innerHTML='<div class="weapon-image"><img alt="" src="/assets/weapons/'+encodeURIComponent(w[1])+'"><span class="weapon-index">0'+(i+1)+'</span></div><div class="weapon-copy"><strong>'+w[0]+'</strong><small>'+w[2]+'</small><p>'+w[3]+'</p></div><span class="select-mark">＋</span>';b.onclick=()=>{chosen[category]=w[0];render()};cards.appendChild(b)});label.textContent=chosen.rifle+' / '+chosen.pistol+' / '+chosen.knife;}
+ const catalog={
+  rifle:[['K2C1','BALANCED RIFLE','Damage 25 · 115 ms · 30 RDS'],['M4A1','FAST ASSAULT RIFLE','Damage 22 · 86 ms · 30 RDS'],['AUG','PRECISION RIFLE','Damage 29 · 145 ms · 30 RDS']],
+  pistol:[['DEAGLE_BLACK','DESERT EAGLE / BLACK','Damage 48 · 360 ms · 7 RDS'],['DEAGLE_WHITE','DESERT EAGLE / WHITE','Damage 48 · 360 ms · 7 RDS']],
+  knife:[['GURKHA','GURKHA KNIFE','Damage 55 · 650 ms · 3.0 m'],['FIELD_KNIFE','FIELD KNIFE','Damage 38 · 430 ms · 2.5 m']]};
+ const display={K2C1:'K2C1',M4A1:'M4A1',AUG:'AUG',DEAGLE_BLACK:'DESERT EAGLE BLACK',DEAGLE_WHITE:'DESERT EAGLE WHITE',GURKHA:'GURKHA KNIFE',FIELD_KNIFE:'FIELD KNIFE'};
+ const chosen={rifle:'K2C1',pistol:'DEAGLE_BLACK',knife:'GURKHA'};let category='rifle';const cards=document.getElementById('weapon-cards'),label=document.getElementById('selected-loadout');
+ function render(){cards.innerHTML='';catalog[category].forEach((w,i)=>{const b=document.createElement('button');b.className='weapon-card'+(chosen[category]===w[0]?' selected':'');b.innerHTML='<div class="weapon-image model-thumb"><span class="weapon-index">0'+(i+1)+'</span><span class="model-glyph">'+(category==='rifle'?'▰':category==='pistol'?'◢':'╱')+'</span></div><div class="weapon-copy"><strong>'+display[w[0]]+'</strong><small>'+w[1]+'</small><p>'+w[2]+'</p></div><span class="select-mark">＋</span>';b.onclick=()=>{chosen[category]=w[0];render();window.dispatchEvent(new CustomEvent('ny-preview',{detail:{id:w[0]}}))};cards.appendChild(b)});label.textContent=display[chosen.rifle]+' / '+display[chosen.pistol]+' / '+display[chosen.knife];window.NYLoadout={...chosen};window.dispatchEvent(new CustomEvent('ny-preview',{detail:{id:chosen[category]}}));}
  document.querySelectorAll('.loadout-tab').forEach(b=>b.onclick=()=>{category=b.dataset.category;document.querySelectorAll('.loadout-tab').forEach(x=>x.classList.toggle('active',x===b));render()});
  document.getElementById('confirm-loadout').onclick=()=>{try{sessionStorage.setItem('ny-loadout',JSON.stringify(chosen))}catch(e){};document.getElementById('nick').focus();document.getElementById('play').scrollIntoView({behavior:'smooth',block:'center'})};render();
 })();
