@@ -10,15 +10,15 @@ const MAX_PER_IP = parseInt(process.env.MAX_PER_IP, 10) || 4;
 const MAP = require('./data/map.json');
 const HP = 100, HEAD_MULT = 2, RELOAD_MS = 1800, RESPAWN_MS = 3000, EYE = 1.6;
 const WEAPONS = {
-  K2C1: { slot:'rifle', mag:30, reserve:120, damage:25, fireMs:115, range:125, reloadMs:1900, tracerSpeed:190, recoil:0.013, kind:'gun' },
-  M4A1: { slot:'rifle', mag:30, reserve:120, damage:22, fireMs:86, range:112, reloadMs:1650, tracerSpeed:235, recoil:0.010, kind:'gun' },
-  AUG: { slot:'rifle', mag:30, reserve:120, damage:29, fireMs:145, range:145, reloadMs:2050, tracerSpeed:260, recoil:0.008, kind:'gun' },
+  VANTA7: { slot:'rifle', mag:30, reserve:120, damage:25, fireMs:115, range:125, reloadMs:1900, tracerSpeed:190, recoil:0.013, kind:'gun' },
+  KRAIT4: { slot:'rifle', mag:30, reserve:120, damage:22, fireMs:86, range:112, reloadMs:1650, tracerSpeed:235, recoil:0.010, kind:'gun' },
+  ORACLEX: { slot:'rifle', mag:30, reserve:120, damage:29, fireMs:145, range:145, reloadMs:2050, tracerSpeed:260, recoil:0.008, kind:'gun' },
   DEAGLE_BLACK: { slot:'pistol', mag:7, reserve:42, damage:48, fireMs:360, range:90, reloadMs:1450, tracerSpeed:175, recoil:0.038, kind:'gun' },
   DEAGLE_WHITE: { slot:'pistol', mag:7, reserve:42, damage:48, fireMs:360, range:90, reloadMs:1450, tracerSpeed:175, recoil:0.038, kind:'gun' },
   GURKHA: { slot:'knife', mag:Infinity, reserve:Infinity, damage:55, fireMs:650, range:3.0, reloadMs:0, tracerSpeed:0, recoil:0, kind:'melee' },
   FIELD_KNIFE: { slot:'knife', mag:Infinity, reserve:Infinity, damage:38, fireMs:430, range:2.5, reloadMs:0, tracerSpeed:0, recoil:0, kind:'melee' }
 };
-const DEFAULT_LOADOUT = { rifle:'K2C1', pistol:'DEAGLE_BLACK', knife:'GURKHA' };
+const DEFAULT_LOADOUT = { rifle:'VANTA7', pistol:'DEAGLE_BLACK', knife:'GURKHA' };
 const safeLoadout = (raw) => ({ rifle: raw && WEAPONS[raw.rifle]?.slot==='rifle' ? raw.rifle : DEFAULT_LOADOUT.rifle, pistol: raw && WEAPONS[raw.pistol]?.slot==='pistol' ? raw.pistol : DEFAULT_LOADOUT.pistol, knife: raw && WEAPONS[raw.knife]?.slot==='knife' ? raw.knife : DEFAULT_LOADOUT.knife });
 const app = express();
 app.set('trust proxy', 1); app.disable('x-powered-by');
@@ -71,7 +71,7 @@ io.on('connection',(socket)=>{
   socket.on('join',(data,ack)=>{
     const reply=typeof ack==='function'?ack:()=>{};if(players.has(socket.id))return reply({ok:false,error:'이미 참가 중입니다.'});if(players.size>=MAX_PLAYERS)return reply({ok:false,error:`서버가 가득 찼습니다 (${MAX_PLAYERS}명).`});
     const name=validName(data&&data.name);if(!name)return reply({ok:false,error:'닉네임은 2~16자 (한글/영문/숫자/_/-) 이어야 합니다.'});if(nameTaken(name))return reply({ok:false,error:'이미 사용 중인 닉네임입니다.'});
-    const sp=pickSpawn(socket.id),loadout=safeLoadout(data&&data.loadout),p={id:socket.id,sock:socket,name,x:sp[0],y:sp[1],z:sp[2],ry:0,pitch:0,anim:0,hp:HP,alive:true,kills:0,deaths:0,loadout,weapon:loadout.rifle,ammo:{[loadout.rifle]:30,[loadout.pistol]:7},reserve:{[loadout.rifle]:120,[loadout.pistol]:42},reloading:false,reloadTimer:null,lastShot:{K2C1:0,M4A1:0,AUG:0,DEAGLE_BLACK:0,DEAGLE_WHITE:0,GURKHA:0,FIELD_KNIFE:0},lastMove:Date.now(),moves:0,moveWin:Date.now()};
+    const sp=pickSpawn(socket.id),loadout=safeLoadout(data&&data.loadout),p={id:socket.id,sock:socket,name,x:sp[0],y:sp[1],z:sp[2],ry:0,pitch:0,anim:0,hp:HP,alive:true,kills:0,deaths:0,loadout,weapon:loadout.rifle,ammo:{[loadout.rifle]:30,[loadout.pistol]:7},reserve:{[loadout.rifle]:120,[loadout.pistol]:42},reloading:false,reloadTimer:null,lastShot:{VANTA7:0,KRAIT4:0,ORACLEX:0,DEAGLE_BLACK:0,DEAGLE_WHITE:0,GURKHA:0,FIELD_KNIFE:0},lastMove:Date.now(),moves:0,moveWin:Date.now()};
     players.set(socket.id,p);reply({ok:true,id:p.id,spawn:sp,hp:HP,...ammoPayload(p),players:[...players.values()].map(q=>({...pub(q),x:q.x,y:q.y,z:q.z,ry:q.ry}))});
     socket.broadcast.emit('joined',{...pub(p),x:p.x,y:p.y,z:p.z,ry:0});io.emit('board',board());broadcastOnline();
   });

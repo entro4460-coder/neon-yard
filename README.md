@@ -1,49 +1,27 @@
-# NEON YARD — browser multiplayer FPS
+# NEON YARD — Browser FPS V4: Cyber City + Toggle ADS
 
-Three.js + Express + Socket.IO 기반의 브라우저 FPS입니다. 기존 Render 배포 설정과 `/healthz`, `/api/status`, `/api/map` 엔드포인트를 유지했습니다.
+Three.js + Express + Socket.IO 기반 브라우저 온라인 FPS 프로토타입.
+
+## 이번 빌드
+- 기존 `map.json`을 참조하지 않고 새로 생성한 `data/map.json`으로 소형 사이버펑크 도시 전장 구성
+- 도로, 보도, 발광 창문, 옥상 장비, 네온 간판, 가로등, 엄폐물 등 절차적 3D 도시 디테일 추가
+- 소총의 게임 내 이름과 디자인 개성 변경: VANTA-7 / KRAIT-4 / ORACLE-X
+- 우클릭 토글형 도트 조준 전환: 눌러 켜고 다시 눌러 끔
+- 조준 전환 중 카메라 FOV와 1인칭 총 위치가 부드럽게 보간
+- 기존 서버 권한 기반 총격, 리스폰, 킬보드, 로비 흐름 유지하는 방향으로 수정
 
 ## 실행
-
 ```bash
 npm install
 npm start
 ```
-
-브라우저에서 `http://localhost:3000` 접속 후 닉네임을 입력하고 PLAY를 누르세요.
+브라우저에서 `http://localhost:3000` 접속. 데스크톱 Chrome/Edge 권장.
 
 ## 조작
+- WASD 이동, Shift 달리기, Space 점프, Ctrl 웅크리기
+- 마우스 시점, 좌클릭 사격
+- 우클릭: 도트 조준 토글
+- 1 소총 / 2 권총 / 3 칼, R 재장전, Tab 킬보드, Esc 마우스 해제
 
-- `W A S D`: 이동 / `Shift`: 달리기 / `Space`: 점프
-- 마우스: 시점 조작
-- 왼쪽 클릭: 소총 자동 사격 / 권총 단발 사격 / 칼 휘두르기
-- `1`: 소총 (탄창 30, 예비 탄약 120)
-- `2`: 권총 (탄창 12, 예비 탄약 48)
-- `3`: 근접 칼
-- `R`: 재장전 / `Tab`: 킬보드 / `Esc`: 마우스 해제
-
-## 배포 (Render)
-
-저장소 루트에 `package.json`, `server.js`, `render.yaml`, `public/`, `data/`가 함께 있어야 합니다. Render는 `npm install` 후 `npm start`를 실행합니다. 환경변수 `MAX_PLAYERS`(기본 16), `MAX_PER_IP`(기본 4)를 설정할 수 있습니다.
-
-## 구현 사항
-
-- 서버 권한 기반 체력, 탄약, 연사 간격, 무기 전환, 총기 피해 및 근접 공격 판정
-- 총알은 서버에서 맵 박스에 막히며, 헤드샷은 총기 피해 2배
-- 클라이언트 총구 위치에서 서버가 계산한 충돌 지점까지 예광탄 렌더링
-- 소총/권총/칼 1인칭 모델, 반동, 총구 섬광, 피격 방향 표시, 화면 흔들림
-- 확장된 160×160 전장, 엄폐물, 컨테이너형 구조물 및 점프 가능한 계단형 지형
-- 플레이어별 안정적인 색상과 절차적 걷기 애니메이션
-
-## 참고
-
-현재 맵은 박스 기반 충돌/레이캐스트 구조입니다. 계단형 구조물은 점프를 통해 올라가는 방식이며, 완전한 건물 내부·문·엘리베이터·네트워크 지연 보정은 포함하지 않습니다. 브라우저/기기별 실제 멀티플레이 부하 테스트는 배포 후 별도로 확인해야 합니다.
-
-
-## FPS armory update
-- Weapon selection is submitted with the join request and validated by the server. Rifle, sidearm, and melee slots map to the selected K2C1/M4A1/AUG, Desert Eagle variants, and Gurkha/field knives.
-- Each weapon has server-side damage, fire interval, magazine/reserve, reload duration, range, and tracer-speed settings; recoil and handling are applied client-side from the same per-weapon profile.
-- The armory now renders a procedural low-poly Three.js model in a slow rotating 3D preview, rather than using the reference images as the in-game display. The same model builder is used for the first-person weapon.
-- Right mouse enables ADS (narrower FOV and reduced recoil); Ctrl crouches and lowers the camera and server-side shot origin. Knife variants have distinct damage, swing timing, range, and swing animation.
-- The map adds road surfaces, lane marks, and neon skyline dressing to make the arena read more like a compact urban combat zone.
-
-Note: these are stylized procedural 3D meshes, not imported production-grade CAD/game-asset models. A full browser and live multiplayer playtest is still recommended before deployment.
+## 주의
+이 빌드는 코드로 생성한 절차적 3D 메시를 사용하며, 전문 아티스트가 제작한 고해상도 스캔/텍스처 기반 에셋과 동일한 품질을 보장하지 않습니다. 브라우저와 실제 멀티플레이에서 플레이테스트가 필요합니다. 조준 애니메이션은 기본 보간형 프로토타입이며 무기별 전용 애니메이션/시각적 도트 옵틱 정렬은 후속 튜닝 대상입니다.
