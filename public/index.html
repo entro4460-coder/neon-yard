@@ -11,6 +11,12 @@
 <canvas id="game"></canvas>
 
 <main id="menu">
+  <section id="loadout" class="loadout-panel">
+    <div class="loadout-head"><div><span class="eyebrow">NEON YARD // ARMORY</span><h2>CHOOSE YOUR LOADOUT</h2><p>전투에 투입되기 전 장비를 선택하십시오.</p></div><div class="armory-mark">NY<span> / 01</span></div></div>
+    <div class="loadout-tabs"><button class="loadout-tab active" data-category="rifle">RIFLES</button><button class="loadout-tab" data-category="pistol">SIDEARMS</button><button class="loadout-tab" data-category="knife">MELEE</button></div>
+    <div id="weapon-cards" class="weapon-cards"></div>
+    <div class="loadout-footer"><div><small>SELECTED LOADOUT</small><strong id="selected-loadout">K2C1 / DESERT EAGLE BLACK / GURKHA KNIFE</strong></div><button id="confirm-loadout">CONFIRM LOADOUT ↗</button></div>
+  </section>
   <section class="panel">
     <h1>NEON<br>YARD</h1>
     <p class="tag">설치 없이 바로 시작하는 온라인 총격전</p>
@@ -49,6 +55,15 @@
   <div id="dead" class="hidden">사망 — 곧 리스폰합니다</div>
   <table id="board" class="hidden"></table>
 </div>
+<script>
+(() => {
+ const catalog={rifle:[['K2C1','K2C1.jpg','BALANCED RIFLE','Reliable handling / 30 RDS'],['M4A1','M4A1.jpg','ASSAULT RIFLE','Fast follow-up fire / 30 RDS'],['AUG','AUG.jpg','PRECISION RIFLE','Stable sight picture / 30 RDS']],pistol:[['DESERT EAGLE BLACK','DESET.jpg','HEAVY SIDEARM','High impact / 7 RDS'],['DESERT EAGLE WHITE','DESET.jpg','WHITE VARIANT','Same performance / 7 RDS']],knife:[['GURKHA KNIFE','구르카.jpg','HEAVY MELEE','Wide blade profile'],['FIELD KNIFE','야전칼.jpg','TACTICAL MELEE','Compact field design']]};
+ const chosen={rifle:'K2C1',pistol:'DESERT EAGLE BLACK',knife:'GURKHA KNIFE'};let category='rifle';const cards=document.getElementById('weapon-cards'),label=document.getElementById('selected-loadout');
+ function render(){cards.innerHTML='';catalog[category].forEach((w,i)=>{const b=document.createElement('button');b.className='weapon-card'+(chosen[category]===w[0]?' selected':'');b.innerHTML='<div class="weapon-image"><img alt="" src="/assets/weapons/'+encodeURIComponent(w[1])+'"><span class="weapon-index">0'+(i+1)+'</span></div><div class="weapon-copy"><strong>'+w[0]+'</strong><small>'+w[2]+'</small><p>'+w[3]+'</p></div><span class="select-mark">＋</span>';b.onclick=()=>{chosen[category]=w[0];render()};cards.appendChild(b)});label.textContent=chosen.rifle+' / '+chosen.pistol+' / '+chosen.knife;}
+ document.querySelectorAll('.loadout-tab').forEach(b=>b.onclick=()=>{category=b.dataset.category;document.querySelectorAll('.loadout-tab').forEach(x=>x.classList.toggle('active',x===b));render()});
+ document.getElementById('confirm-loadout').onclick=()=>{try{sessionStorage.setItem('ny-loadout',JSON.stringify(chosen))}catch(e){};document.getElementById('nick').focus();document.getElementById('play').scrollIntoView({behavior:'smooth',block:'center'})};render();
+})();
+</script>
 <script type="module" src="main.js"></script>
 </body>
 </html>
