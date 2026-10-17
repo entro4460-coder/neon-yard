@@ -47,8 +47,44 @@ function buildMap(m) {
   const roadMat=new THREE.MeshStandardMaterial({color:0x080d18,roughness:0.96,metalness:0.05});
   for(const [x,z,w,d] of [[0,0,12,L*1.7],[0,0,L*1.7,12],[-30,0,5,L*1.6],[30,0,5,L*1.6],[0,-30,L*1.6,5],[0,30,L*1.6,5]]){const road=new THREE.Mesh(new THREE.PlaneGeometry(w,d),roadMat);road.rotation.x=-Math.PI/2;road.position.set(x,0.018,z);mapGroup.add(road);}
   const laneMat=new THREE.MeshBasicMaterial({color:0x19e3ff,transparent:true,opacity:0.42});
-  for(let n=-6;n<=6;n++){for(const axis of ['x','z']){const mark=new THREE.Mesh(new THREE.PlaneGeometry(axis==='x'?1.8:0.08,axis==='x'?0.08:1.8),laneMat);mark.rotation.x=-Math.PI/2;mark.position.set(axis==='x'?n*3:0,0.03,axis==='x'?0:n*3);mapGroup.add(mark);}}
-  for(let i=0;i<18;i++){const side=i%4,along=-L*0.78+(i%9)*(L*0.195),x=side===0?-L*0.88:side===1?L*0.88:along,z=side===2?-L*0.88:side===3?L*0.88:along;const h=8+(i%5)*2.2;const tower=new THREE.Mesh(new THREE.BoxGeometry(4.2,h,4.2),new THREE.MeshStandardMaterial({color:i%2?0x17162d:0x101d30,roughness:0.72,metalness:0.25,emissive:i%2?0x40133b:0x073a49,emissiveIntensity:0.28}));tower.position.set(x,h/2,z);mapGroup.add(tower);for(let j=1;j<h/1.8;j++){const strip=new THREE.Mesh(new THREE.BoxGeometry(4.24,0.045,4.24),new THREE.MeshBasicMaterial({color:i%2?0xff2e88:0x19e3ff}));strip.position.set(x,j*1.8,z);mapGroup.add(strip);}}
+  const whiteLine=new THREE.MeshBasicMaterial({color:0xa8c7d8,transparent:true,opacity:0.65});
+  // Main avenues: dashed lane dividers and crosswalks, scaled to the actual arena.
+  for(let n=-10;n<=10;n++){
+    const z=n*7;
+    const dash=new THREE.Mesh(new THREE.PlaneGeometry(2.8,0.12),laneMat);dash.rotation.x=-Math.PI/2;dash.position.set(0,0.035,z);mapGroup.add(dash);
+    const dash2=new THREE.Mesh(new THREE.PlaneGeometry(0.12,2.8),laneMat);dash2.rotation.x=-Math.PI/2;dash2.position.set(z,0.036,0);mapGroup.add(dash2);
+  }
+  for (const cross of [{x:8,z:0,rot:0},{x:-8,z:0,rot:0},{x:0,z:8,rot:Math.PI/2},{x:0,z:-8,rot:Math.PI/2}]) for(let k=-4;k<=4;k++){
+    const stripe=new THREE.Mesh(new THREE.PlaneGeometry(0.82,4.2),whiteLine);stripe.rotation.x=-Math.PI/2;stripe.rotation.z=cross.rot;stripe.position.set(cross.x+(cross.rot? k*0.98: k*0.98),0.04,cross.z);mapGroup.add(stripe);
+  }
+  // Detailed skyline blocks with window grids, roof caps and neon sign bands instead of bare pixel-like cubes.
+  const buildingMat=[0x101927,0x17172a,0x14202b,0x20182d].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:0.62,metalness:0.38}));
+  const windowMats=[new THREE.MeshBasicMaterial({color:0x1abfe9}),new THREE.MeshBasicMaterial({color:0xf52c91}),new THREE.MeshBasicMaterial({color:0x4ce6bd}),new THREE.MeshBasicMaterial({color:0x27384b})];
+  for(let i=0;i<26;i++){
+    const side=i%4,along=-L*0.76+(i%13)*(L*0.126),x=side===0?-L*0.84:side===1?L*0.84:along,z=side===2?-L*0.84:side===3?L*0.84:along;
+    const w=5.5+(i%3)*1.8,d=5.5+((i+1)%3)*1.4,h=10+(i%6)*3.2;
+    const bld=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),buildingMat[i%buildingMat.length]);bld.position.set(x,h/2,z);bld.castShadow=true;bld.receiveShadow=true;mapGroup.add(bld);
+    const roof=new THREE.Mesh(new THREE.BoxGeometry(w+0.28,0.22,d+0.28),mat(0x252b3c, i%2?0xff2e88:0x19e3ff,0.28));roof.position.set(x,h+0.1,z);mapGroup.add(roof);
+    const frontZ=z+(side===2?d/2+0.04:side===3?-d/2-0.04:0);
+    const frontX=x+(side===0?w/2+0.04:side===1?-w/2-0.04:0);
+    for(let fy=2;fy<h-1.2;fy+=2.15) for(let fx=-w/2+0.9;fx<w/2-0.5;fx+=1.35){
+      const win=new THREE.Mesh(new THREE.PlaneGeometry(0.72,0.95),windowMats[(i+Math.round(fy+fx))%windowMats.length]);
+      if(side<2){win.rotation.y=side===0?Math.PI/2:-Math.PI/2;win.position.set(frontX,fy,z+fx*0.55);}else{win.position.set(x+fx*0.55,fy,frontZ);}
+      mapGroup.add(win);
+    }
+    const sign=new THREE.Mesh(new THREE.BoxGeometry(Math.min(w-0.7,4.8),0.55,0.16),new THREE.MeshBasicMaterial({color:i%2?0xff2e88:0x19e3ff}));sign.position.set(x,h*0.62,z+d/2+0.14);mapGroup.add(sign);
+  }
+  // Street lamps, bollards and cover props add readable scale and more realistic combat lanes.
+  for(const [x,z] of [[-15,-15],[15,-15],[-15,15],[15,15],[-42,0],[42,0],[0,-42],[0,42]]){
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.14,5.2,8),mat(0x20283a));pole.position.set(x,2.6,z);mapGroup.add(pole);
+    const arm=new THREE.Mesh(new THREE.BoxGeometry(1.25,0.09,0.12),mat(0x30364a));arm.position.set(x+0.45,5.05,z);mapGroup.add(arm);
+    const lamp=new THREE.PointLight(0x19dfff,2.4,13);lamp.position.set(x+0.55,4.9,z);mapGroup.add(lamp);
+  }
+  for(let i=0;i<14;i++){
+    const x=((i*17)%83)-41,z=((i*29)%83)-41;if(Math.abs(x)<12||Math.abs(z)<12)continue;
+    const crate=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.25,1.35),mat(i%2?0x242c3d:0x31233d,i%2?0x19e3ff:0xff2e88,0.12));crate.position.set(x,0.625,z);crate.castShadow=true;mapGroup.add(crate);
+    const stripe=new THREE.Mesh(new THREE.BoxGeometry(1.52,0.08,1.37),new THREE.MeshBasicMaterial({color:i%2?0x19e3ff:0xff2e88}));stripe.position.set(x,0.9,z);mapGroup.add(stripe);
+  }
   // 외곽 벽 (시각용 + 경계는 이동 클램프로 처리)
   for (const [x, z, w, d] of [[0, -L, L * 2, 1], [0, L, L * 2, 1], [-L, 0, 1, L * 2], [L, 0, 1, L * 2]]) {
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(w, 6, d), new THREE.MeshStandardMaterial({ color: 0x1b1840, emissive: 0x19e3ff, emissiveIntensity: 0.12 }));
@@ -91,7 +127,35 @@ function buildWeapon(type) {
     const blade = new THREE.Mesh(new THREE.ConeGeometry(0.055,0.48,4), mat(0xc8d9ee,0x19e3ff,0.35)); blade.rotation.x = -Math.PI/2; blade.position.set(0,0,-0.34); w.add(blade);
     part(w,[0.2,0.035,0.055],[0,0,-0.08],metal); w.position.set(0.24,-0.2,-0.53);
   }
-  if(type==='AUG'){part(w,[0.16,0.12,0.25],[0,0.13,-0.24],metal);part(w,[0.10,0.09,0.12],[0,0.15,-0.25],dark);} if(type==='M4A1'){part(w,[0.06,0.06,0.30],[0,-0.02,-0.47],metal);part(w,[0.20,0.07,0.11],[0,0.02,0.30],dark);} if(type==='DEAGLE_BLACK'||type==='DEAGLE_WHITE'){const accent=mat(type==='DEAGLE_WHITE'?0xe7edf6:0x090b11,0xff2e88,0.12);part(w,[0.14,0.035,0.28],[0,0.075,-0.05],accent);part(w,[0.07,0.035,0.18],[0,0.095,-0.30],metal);} if(type==='FIELD_KNIFE'){part(w,[0.055,0.045,0.35],[0,0,-0.31],metal,[0,0,0.08]);} w.userData.basePos=w.position.clone();return w;
+  // Futuristic industrial detailing: layered receiver plates, emissive rails and energy-coil rings.
+  const cyanGlow=new THREE.MeshStandardMaterial({color:0x071e39,metalness:0.45,roughness:0.24,emissive:0x087fff,emissiveIntensity:2.2});
+  const pinkGlow=new THREE.MeshStandardMaterial({color:0x30091f,metalness:0.35,roughness:0.24,emissive:0xff168f,emissiveIntensity:1.8});
+  const greenGlow=new THREE.MeshStandardMaterial({color:0x09281b,metalness:0.35,roughness:0.24,emissive:0x20ff86,emissiveIntensity:1.65});
+  const cylinder=(parent,r1,r2,len,pos,material,axis='z',segments=12)=>{const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,len,segments),material);mesh.position.set(...pos);if(axis==='z')mesh.rotation.x=Math.PI/2;else if(axis==='x')mesh.rotation.z=Math.PI/2;parent.add(mesh);mesh.castShadow=true;return mesh;};
+  if(['K2C1','M4A1','AUG'].includes(type)){
+    // Coil chamber and energy muzzle, built from real 3D meshes rather than a flat image.
+    cylinder(w,0.105,0.105,0.34,[0,0.025,-0.27],metal,'z',16);
+    for(let i=0;i<5;i++){const ring=new THREE.Mesh(new THREE.TorusGeometry(0.102,0.014,8,20),i%2?pinkGlow:cyanGlow);ring.position.set(0,0.025,-0.16-i*0.075);w.add(ring);}
+    cylinder(w,0.085,0.085,0.055,[0,0.025,-0.67],cyanGlow,'z',16);
+    part(w,[0.21,0.025,0.42],[0,0.105,-0.12],metal);
+    for(let i=0;i<4;i++)part(w,[0.025,0.025,0.31],[-0.085+i*0.056,0.125,-0.15],i%2?pinkGlow:cyanGlow);
+    part(w,[0.18,0.025,0.09],[0,0.19,0.03],greenGlow);
+    part(w,[0.06,0.055,0.16],[0.04,0.16,0.1],dark);
+  }
+  if(type==='AUG'){part(w,[0.16,0.12,0.25],[0,0.13,-0.24],metal);part(w,[0.10,0.09,0.12],[0,0.15,-0.25],dark);part(w,[0.2,0.035,0.12],[0,0.21,-0.24],greenGlow);}
+  if(type==='M4A1'){part(w,[0.06,0.06,0.30],[0,-0.02,-0.47],metal);part(w,[0.20,0.07,0.11],[0,0.02,0.30],dark);part(w,[0.025,0.025,0.23],[0.09,0.035,-0.36],cyanGlow);}
+  if(type==='K2C1'){part(w,[0.22,0.07,0.22],[0,0.13,-0.02],dark);part(w,[0.15,0.022,0.18],[0,0.176,-0.02],pinkGlow);}
+  if(type==='DEAGLE_BLACK'||type==='DEAGLE_WHITE'){
+    const accent=mat(type==='DEAGLE_WHITE'?0xe7edf6:0x090b11,0xff2e88,0.12);part(w,[0.14,0.035,0.28],[0,0.075,-0.05],accent);part(w,[0.07,0.035,0.18],[0,0.095,-0.30],metal);
+    part(w,[0.13,0.025,0.2],[0,0.12,-0.08],cyanGlow);cylinder(w,0.045,0.045,0.035,[0,0.02,-0.42],pinkGlow,'z',12);
+  }
+  if(type==='GURKHA'||type==='FIELD_KNIFE'){
+    // Shaped blade, fuller, guard and glowing pommel. A swept motion rotates this complete model.
+    const bladeGeo=new THREE.BufferGeometry();const verts=new Float32Array([-0.055,0,0,0.055,0,0,-0.018,0,-0.48, 0.055,0,0,0.018,0,-0.48,-0.018,0,-0.48, -0.055,0,0,0,0.025,-0.22,-0.018,0,-0.48, 0.055,0,0,0.018,0,-0.48,0,0.025,-0.22]);bladeGeo.setAttribute('position',new THREE.BufferAttribute(verts,3));bladeGeo.computeVertexNormals();const bladeMesh=new THREE.Mesh(bladeGeo,new THREE.MeshStandardMaterial({color:0xb9c8d9,metalness:0.9,roughness:0.2,side:THREE.DoubleSide,emissive:0x063a5c,emissiveIntensity:0.25}));bladeMesh.position.set(0,0,-0.17);w.add(bladeMesh);
+    part(w,[0.24,0.035,0.06],[0,0,-0.08],metal);part(w,[0.11,0.095,0.2],[0,0,0.08],dark);part(w,[0.12,0.025,0.17],[0,0.055,0.08],pinkGlow);cylinder(w,0.035,0.035,0.045,[0,0,0.19],cyanGlow,'z',10);
+    if(type==='GURKHA')part(w,[0.025,0.02,0.25],[0,0.018,-0.34],cyanGlow);
+  }
+  w.userData.basePos=w.position.clone();return w;
 }
 let weaponModel;
 function setWeaponModel(type) { weaponRoot.clear(); weaponModel = buildWeapon(type); weaponRoot.add(weaponModel); weaponRoot.rotation.set(0,0,0); weaponKick=0; document.querySelectorAll('.weapon-slot').forEach(n=>n.classList.toggle('active',n.dataset.slot===weaponCfg[type]?.slot)); }
