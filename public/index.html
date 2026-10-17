@@ -27,6 +27,7 @@
       <dt>Shift</dt><dd>달리기</dd>
       <dt>Space</dt><dd>점프</dd>
       <dt>마우스</dt><dd>시점 / 왼쪽 클릭 사격</dd>
+      <dt>1 / 2 / 3</dt><dd>소총 / 권총 / 칼 전환</dd>
       <dt>R</dt><dd>재장전</dd>
       <dt>Tab</dt><dd>킬보드</dd>
       <dt>Esc</dt><dd>마우스 해제</dd>
@@ -40,9 +41,10 @@
 <div id="lost" class="overlay hidden"><div><span id="lostmsg">서버와 연결이 끊어졌습니다</span><button id="retry">다시 접속</button></div></div>
 
 <div id="hud" class="hidden">
-  <div id="cross"></div><div id="hitm"></div><div id="vig"></div>
+  <div id="cross"></div><div id="hitm"></div><div id="hurtDir"></div><div id="vig"></div>
   <div id="feed"></div>
-  <div id="stats"><b id="hp">100</b><i>HP</i><span id="ammo">30 / 30</span></div>
+  <div id="stats"><b id="hp">100</b><i>HP</i><span id="ammo">30 / 120</span></div>
+  <div id="weaponhud"><span class="weapon-slot active" data-slot="rifle">1 <b>RIFLE</b></span><span class="weapon-slot" data-slot="pistol">2 <b>PISTOL</b></span><span class="weapon-slot" data-slot="knife">3 <b>KNIFE</b></span></div>
   <div id="myk"></div>
   <div id="dead" class="hidden">사망 — 곧 리스폰합니다</div>
   <table id="board" class="hidden"></table>
