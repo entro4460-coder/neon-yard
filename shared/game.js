@@ -11,9 +11,21 @@ export const boxes=[
 ];
 export const platforms=[{x:15,z:8,w:7,d:6,y:3}];
 export const ramps=[{x:15,z:2,w:3,d:6,low:0,high:3}];
+// Physical rail bars/posts also drive rendering and hitscan.
+export const rails=[];
+for(const p of platforms){
+ const segments=[[p.x-p.w/2,p.z,.06,p.d],[p.x+p.w/2,p.z,.06,p.d],[p.x,p.z+p.d/2,p.w,.06],[12.5,p.z-p.d/2,2,.06],[17.5,p.z-p.d/2,2,.06]];
+ for(const [x,z,w,d] of segments){for(const y of [.45,1])rails.push([x,p.y+y,z,w,.06,d]);const n=Math.max(1,Math.ceil(Math.max(w,d)/1.5));for(let i=0;i<=n;i++)rails.push([x+(w>.1?(i/n-.5)*w:0),p.y+.5,z+(d>.1?(i/n-.5)*d:0),.05,1,.05]);}
+}
+export function rayRamp(o,d,p){
+ const angle=Math.atan2(p.high-p.low,p.d),c=Math.cos(angle),s=Math.sin(angle);
+ const center=(p.high+p.low)/2-.075/c,dy=o[1]-center,dz=o[2]-p.z;
+ return rayBox([o[0]-p.x,c*dy-s*dz,s*dy+c*dz],[d[0],c*d[1]-s*d[2],s*d[1]+c*d[2]],[0,0,0,p.w,.15,Math.hypot(p.d,p.high-p.low)]);
+}
+export function coverDistance(o,d,door=false){return Math.min(150,...[...boxes,...rails,...platforms.map(p=>[p.x,p.y-.1,p.z,p.w,.2,p.d]),...(door?[[0,1.5,3,4,3,.4]]:[])].map(b=>rayBox(o,d,b)),...ramps.map(p=>rayRamp(o,d,p)));}
 export function floorAt(x,z){let y=0;for(const p of platforms)if(Math.abs(x-p.x)<p.w/2&&Math.abs(z-p.z)<p.d/2)y=Math.max(y,p.y);for(const p of ramps)if(Math.abs(x-p.x)<p.w/2&&Math.abs(z-p.z)<p.d/2)y=Math.max(y,p.low+(z-(p.z-p.d/2))/p.d*(p.high-p.low));return y;}
 
-export function blocked(x,y,z,h=1.8,door=false){return [...boxes,...(door?[[0,1.5,3,4,3,.4]]:[])].some(b=>Math.abs(x-b[0])<b[3]/2+.3&&Math.abs(z-b[2])<b[5]/2+.3&&y<b[1]+b[4]/2&&y+h>b[1]-b[4]/2);}
+export function blocked(x,y,z,h=1.8,door=false){return [...boxes,...rails,...(door?[[0,1.5,3,4,3,.4]]:[])].some(b=>Math.abs(x-b[0])<b[3]/2+.3&&Math.abs(z-b[2])<b[5]/2+.3&&y<b[1]+b[4]/2&&y+h>b[1]-b[4]/2);}
 export function move(p,i,dt,door){
  const standingBlocked=blocked(p.x,p.y,p.z,1.8,door);
  const crouch=!!i.crouch||(!!p.crouch&&standingBlocked);
