@@ -2,12 +2,9 @@ services:
   - type: web
     name: vandal
     runtime: node
-    plan: free
-    buildCommand: npm install
+    buildCommand: npm ci
     startCommand: npm start
-    healthCheckPath: /healthz
+    healthCheckPath: /health
     envVars:
-      - key: NODE_VERSION
-        value: 20
-      - key: MAX_PLAYERS
-        value: 16
+      - key: NODE_ENV
+        value: production
