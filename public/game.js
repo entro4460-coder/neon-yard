@@ -1,4 +1,4 @@
-import * as T from 'three';import {createWeapon,materialMaps} from './art.js';import {createAudio} from './audio.js';import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';import {weapons,boxes,platforms,ramps,rails,handling,recoilAt,reloadPose} from '/shared/game.js';
+import * as T from 'three';import {createWeapon,materialMaps} from './art.js';import {createCity} from './city.js';import {createAudio} from './audio.js';import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';import {weapons,boxes,platforms,ramps,rails,handling,recoilAt,reloadPose} from '/shared/game.js';
 const $=id=>document.getElementById(id),socket=io(),scene=new T.Scene();scene.background=new T.Color('#080e19');scene.fog=new T.FogExp2('#080e19',.012);const renderer=new T.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=T.SRGBColorSpace;document.body.append(renderer.domElement);const camera=new T.PerspectiveCamera(78,innerWidth/innerHeight,.04,250);camera.position.set(-19,1.6,19);scene.add(camera);scene.add(new T.HemisphereLight(0x96c9ed,0x17202b,2));const sun=new T.DirectionalLight(0x8fb0d4,2);sun.position.set(10,30,12);scene.add(sun);
 let seed=71;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}const anisotropy=renderer.capabilities.getMaxAnisotropy();
 const metal=new T.MeshStandardMaterial({...materialMaps('#64717a','metal',anisotropy),roughness:.52,metalness:.78}),dark=new T.MeshStandardMaterial({...materialMaps('#202932','metal',anisotropy),metalness:.65,roughness:.42}),orange=new T.MeshStandardMaterial({...materialMaps('#a55732','metal',anisotropy),metalness:.35,roughness:.53});
@@ -9,10 +9,10 @@ const envCanvas=document.createElement('canvas');envCanvas.width=512;envCanvas.h
 
 function cube(x,y,z,w,h,d,mat=metal,parent=scene){const m=new T.Mesh((parent!==scene&&w<1&&h<1&&d<1?new RoundedBoxGeometry(w,h,d,2,Math.min(w,h,d)*.12):new T.BoxGeometry(w,h,d)),mat);m.position.set(x,y,z);parent.add(m);return m;}function glow(color){return new T.MeshBasicMaterial({color});}const cyan=glow('#46ded4'),red=glow('#ec6251');
 function label(text,x,y,z,color='#59d8d7',size=4){const c=document.createElement('canvas');c.width=512;c.height=128;const a=c.getContext('2d');a.fillStyle='#071015';a.fillRect(0,0,512,128);a.fillStyle=color;a.font='bold 58px monospace';a.textAlign='center';a.fillText(text,256,83);const m=new T.Mesh(new T.PlaneGeometry(size,size/4),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),side:T.DoubleSide}));m.position.set(x,y,z);scene.add(m);return m;}
-cube(0,-.18,0,50,.35,54,new T.MeshStandardMaterial({...materialMaps('#29323b','concrete',anisotropy),roughness:.38,metalness:.15}));for(const b of boxes){cube(...b,b[4]>5?concrete:metal);if(b[4]>5){for(let y=1;y<b[4];y+=2){cube(b[0],y,b[2]+b[5]/2+.03,b[3]-.4,.06,.08,cyan);}for(let z=b[2]-b[5]/2+1;z<b[2]+b[5]/2;z+=2)cube(b[0]+b[3]/2+.04,3,z,.1,1.2,.7,dark);}}
-for(const side of [-1,1]){for(let z=-20;z<=20;z+=6){cube(side*21,3,z,.25,6,.25,orange);cube(side*20.7,5.7,z,.8,.12,.2,cyan);}for(let j=0;j<3;j++){const pipe=new T.Mesh(new T.CylinderGeometry(.12,.12,40,20),orange);pipe.rotation.x=Math.PI/2;pipe.position.set(side*10.7,2+j*.4,0);scene.add(pipe);}}
-for(let i=0;i<45;i++){const a=rand()*Math.PI*2,r=42+rand()*65,h=12+rand()*45;const x=Math.sin(a)*r,z=Math.cos(a)*r;cube(x,h/2,z,5+rand()*9,h,6+rand()*8,dark);for(let y=4;y<h;y+=4)cube(x,y,z+4,3,.1,.1,i%4?cyan:red);}
-label('BLACK MARKET',-15,5.1,4.1,'#ee715c',7);label('IRONWORKS',15,6,14.1,'#67dad8',7);label('PON // ENERGY',0,4.2,12.1,'#dd9972',4);for(let i=-1;i<=1;i++){cube(i*1.2,1,-12,.7,2,2,dark);cube(i*1.2,1,-10.97,.4,1.2,.04,cyan);}const door=cube(0,1.5,3,4,3,.4,orange);cube(2.6,1.3,3,.35,.5,.3,cyan);label('07 / THE CORE',0,6,-25,'#50dace',9);
+cube(0,-.18,0,50,.35,54,new T.MeshStandardMaterial({...materialMaps('#29323b','concrete',anisotropy),roughness:.38,metalness:.15}));for(const b of boxes)cube(...b,b[4]>5?concrete:metal);
+createCity(scene,{metal,dark,orange,concrete});
+
+for(let i=-1;i<=1;i++){cube(i*1.2,1,-12,.7,2,2,dark);cube(i*1.2,1,-10.97,.4,1.2,.04,cyan);}const door=cube(0,1.5,3,4,3,.4,orange);cube(2.6,1.3,3,.35,.5,.3,cyan);
 // Accessible interiors and an upper factory gallery.
 for(const p of platforms)cube(p.x,p.y-.1,p.z,p.w,.2,p.d,metal);
 for(const b of rails)cube(...b,b[4]<.1?orange:metal);
@@ -50,7 +50,7 @@ const running=walking&&keys.ShiftLeft&&!isAds&&!self?.crouch;const bob=walking&&
 weaponRoot.position.lerp(new T.Vector3(isAds?0:.29,(isAds?-.21:-.3)-pose.dip*.11+bob,-.53+recoil*.7),1-Math.exp(-dt*15));
 gun.rotation.x=recoil-pose.dip*.32;gun.rotation.z=-pose.dip*.42;
 magazine.position.y=-.23-pose.magazine*.4;magazine.rotation.z=pose.magazine*-.22;magazine.position.x=-pose.magazine*.12;
- supportHand.position.set(-.07-pose.magazine*.12,-.19-pose.magazine*.42,-.34+pose.dip*.24);
+ supportHand.position.set(-.07-pose.magazine*.12,-.14-pose.magazine*.42,-.34+pose.dip*.24);
  supportHand.rotation.z=-pose.magazine*.4;gun.position.y=pose.slap*.018;
 bolt.position.z=.12+recoil*.7+pose.bolt*.14;
 $('cross').style.opacity=isAds?'0': '1';if(self?.reload)$('weapon').textContent=weapons[weaponIndex].name+' / '+pose.phase;

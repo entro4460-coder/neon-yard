@@ -1,6 +1,8 @@
+import {cityBlocks} from './city.js';
 export const weapons=[{name:'VANTA-7',mag:30,rate:110,damage:28,reload:1800,spread:.008},{name:'KRAIT-4',mag:36,rate:72,damage:19,reload:1400,spread:.016},{name:'ORACLE-X',mag:8,rate:800,damage:85,reload:2300,spread:.001}];
 // Shared collision geometry: walls have real entrance gaps.
 export const boxes=[
+ ...cityBlocks.map(b=>[b.x,b.base+b.height/2,b.z,b.w,b.height,b.d]),
  [-19,3,-5,.5,6,18],[-15,3,-14,8,6,.5],[-15,3,4,8,6,.5],
  [-11,3,-11,.5,6,6],[-11,3,1,.5,6,6],[-15,6,-5,8,.3,18],
  [19,4,5,.5,8,18],[15,4,-4,8,8,.5],[15,4,14,8,8,.5],
