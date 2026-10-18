@@ -16,10 +16,7 @@ let MAP = null, socket = null, running = false, locked = false;
 
 // ---------- Three.js 씬 ----------
 const renderer = new THREE.WebGLRenderer({ canvas: el.canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
@@ -96,15 +93,12 @@ function buildMap(m) {
   for (const b of m.boxes) {
     const geo = new THREE.BoxGeometry(...b.s);
     const col = new THREE.Color(b.c);
-    // Large building collision volumes stay invisible: detailed facades are authored separately above.
-    // Low cover remains visible but uses restrained industrial materials, not neon wireframe cubes.
-    if (b.s[1] <= 2.2) {
-      const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x252a35, roughness: 0.72, metalness: 0.42 }));
-      mesh.position.set(...b.p); mesh.castShadow = mesh.receiveShadow = true; mapGroup.add(mesh);
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(b.s[0]*0.96,0.045,b.s[2]*0.96), new THREE.MeshBasicMaterial({color:col}));
-      stripe.position.set(b.p[0],b.p[1]+b.s[1]*0.34,b.p[2]);mapGroup.add(stripe);
-    }
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x1d1a40, roughness: 0.6, metalness: 0.4, emissive: col, emissiveIntensity: 0.08 }));
+    mesh.position.set(...b.p); mesh.castShadow = mesh.receiveShadow = true; mapGroup.add(mesh);
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: col }));
+    edges.position.copy(mesh.position); mapGroup.add(edges);
     colliders.push({ minX: b.p[0] - b.s[0] / 2, maxX: b.p[0] + b.s[0] / 2, minY: b.p[1] - b.s[1] / 2, maxY: b.p[1] + b.s[1] / 2, minZ: b.p[2] - b.s[2] / 2, maxZ: b.p[2] + b.s[2] / 2 });
+    if (b.s[1] > 5) { const pl = new THREE.PointLight(col, 18, 24); pl.position.set(b.p[0], b.s[1] + 1, b.p[2]); mapGroup.add(pl); }
   }
 }
 
@@ -135,71 +129,8 @@ function dressCyberCity(m){
   for(let x=-54;x<=54;x+=18){for(const z of [-12,12]){addBox(x,2.3,z,0.16,4.6,0.16,concrete);addBox(x+0.65,4.5,z,1.3,0.12,0.16,concrete);addBox(x+0.65,4.38,z,0.75,0.06,0.12,glass[(Math.abs(x/18))%4]);}}
   for(let z=-54;z<=54;z+=18){addBox(-12,2.3,z,0.16,4.6,0.16,concrete);addBox(-11.4,4.5,z,1.2,0.12,0.16,concrete);addBox(-11.4,4.38,z,0.72,0.06,0.12,glass[1]);}
   for(let i=0;i<18;i++){const x=((i*23)%104)-52,z=((i*37)%104)-52;if(Math.abs(x)<10&&Math.abs(z)<10)continue;const c=glass[i%4];addBox(x,0.65,z,1.25,1.3,0.85,concrete);addBox(x,0.7,z+0.45,0.9,0.8,0.06,c);addBox(x,1.34,z,1.3,0.08,0.9,c);}
-  // High-density cyberpunk street dressing: signage, vents, cables, storefronts, curbs and layered facade panels.
-  const trim = new THREE.MeshStandardMaterial({color:0x343b4d,metalness:0.82,roughness:0.28});
-  const rubber = new THREE.MeshStandardMaterial({color:0x080b12,metalness:0.12,roughness:0.88});
-  const glassDark = new THREE.MeshPhysicalMaterial({color:0x071421,metalness:0.35,roughness:0.12,transparent:true,opacity:0.94,clearcoat:1});
-  const makeSign=(x,y,z,text,color,rot=0)=>{
-    const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');
-    g.fillStyle='#080b16';g.fillRect(0,0,512,128);g.strokeStyle='#'+color.toString(16).padStart(6,'0');g.lineWidth=5;g.strokeRect(5,5,502,118);
-    g.font='900 54px sans-serif';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#'+color.toString(16).padStart(6,'0');g.shadowBlur=20;g.fillStyle='#eafaff';g.fillText(text,256,64);
-    const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
-    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(5.2,1.3),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide}));mesh.position.set(x,y,z);mesh.rotation.y=rot;mapGroup.add(mesh);
-  };
-  // Building detail clusters along the walkable lanes. Every facade gets non-flat geometry.
-  const facades=[[-28,-28,14,14,17], [0,-31,17,13,22], [29,-27,15,16,19], [-31,4,13,18,16], [31,5,15,18,21], [-27,31,17,13,20], [2,31,18,14,24], [30,32,14,14,17],[-49,-18,8,12,11],[49,18,8,12,13],[-18,49,12,8,14],[18,-49,12,8,15]];
-  facades.forEach((b,i)=>{
-    const [x,z,w,d,h]=b, neonColor=neon[i%neon.length];
-    // Heavy vertical corner rails and layered ledges
-    for(const side of [-1,1]){
-      addBox(x+side*(w/2+0.12),h*0.48,z,0.16,h*0.94,d+0.3,trim);
-      addBox(x,h*0.22,z+side*(d/2+0.13),w+0.28,0.12,0.16,trim);
-      addBox(x,h*0.76,z+side*(d/2+0.13),w+0.28,0.12,0.16,trim);
-      addBox(x,h*0.76+0.1,z+side*(d/2+0.22),w+0.08,0.045,0.055,glass[i%4]);
-    }
-    // Storefront frames, dark glass panels and signage at street level
-    const front=z+d/2+0.16;
-    for(let j=0;j<Math.max(2,Math.floor(w/2.4));j++){
-      const xx=x-w/2+1.25+j*2.2;
-      addBox(xx,1.65,front,1.78,2.5,0.12,glassDark);
-      addBox(xx-0.94,1.65,front+0.08,0.09,2.72,0.12,trim);
-      addBox(xx+0.94,1.65,front+0.08,0.09,2.72,0.12,trim);
-      addBox(xx,2.98,front+0.08,1.95,0.1,0.12,trim);
-      addBox(xx,0.38,front+0.08,1.95,0.12,0.12,trim);
-    }
-    makeSign(x,h*0.46,front+0.18,['NEON MARKET','NIGHT / 24','CYBER CAFE','YARD-09','NOVA TECH','NO SIGNAL'][i%6],neonColor);
-    // Roof HVAC, ducts and exhaust fans
-    for(let n=0;n<2+(i%2);n++){
-      const rx=x-w*0.3+n*w*0.25, rz=z-d*0.18;
-      addBox(rx,h+0.48,rz,1.35,0.65,0.95,trim);addBox(rx,h+0.83,rz,1.05,0.08,0.72,rubber);
-      for(let f=0;f<4;f++)addBox(rx-0.42+f*0.28,h+0.88,rz,0.06,0.07,0.62,glass[(i+n)%4]);
-      addBox(rx,h+1.1,rz,0.14,0.38,0.14,trim);
-    }
-    // Vertical neon tubes and side-mounted service pipes
-    for(let n=-1;n<=1;n++){
-      addBox(x+n*(w/2-0.35),h*0.47,z+d/2+0.2,0.045,h*0.78,0.045,glass[(i+n+4)%4]);
-    }
-  });
-  // Cable spans across alleys, with supports and short drops.
-  for(let z=-42;z<=42;z+=21){
-    const wire=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,22,6),rubber);wire.rotation.z=Math.PI/2;wire.position.set(0,7.1,z);mapGroup.add(wire);
-    for(const x of [-10.5,10.5]){addBox(x,6.7,z,0.08,1.1,0.08,trim);addBox(x,7.22,z,0.35,0.07,0.07,glass[1]);}
-  }
-  // Drain grates, tactile curb edges and reflective puddle patches.
-  const puddleMat=new THREE.MeshPhysicalMaterial({color:0x122b3a,metalness:0.6,roughness:0.12,clearcoat:1,transparent:true,opacity:0.8});
-  for(let i=0;i<22;i++){
-    const x=((i*17)%112)-56,z=((i*29)%112)-56;if(Math.abs(x)<9&&Math.abs(z)<9)continue;
-    const puddle=new THREE.Mesh(new THREE.CircleGeometry(0.8+(i%4)*0.22,20),puddleMat);puddle.rotation.x=-Math.PI/2;puddle.scale.y=0.38;puddle.position.set(x,0.042,z);mapGroup.add(puddle);
-    if(i%3===0){addBox(x,0.055,z+1.1,1.1,0.025,0.12,trim);for(let k=0;k<7;k++)addBox(x-0.45+k*0.15,0.073,z+1.1,0.035,0.012,0.14,glass[0]);}
-  }
-  // Neon bollards, trash containers and utility cabinets for human scale.
-  for(let i=0;i<30;i++){
-    const x=((i*13)%116)-58,z=((i*37)%116)-58;if(Math.abs(x)<12&&Math.abs(z)<12)continue;
-    if(i%2===0){addBox(x,0.55,z,0.42,1.1,0.42,trim);addBox(x,0.94,z,0.44,0.08,0.44,glass[i%4]);addBox(x,0.23,z,0.46,0.06,0.46,rubber);}
-    else {addBox(x,0.72,z,0.85,1.42,0.62,trim);addBox(x,0.76,z+0.33,0.62,0.66,0.045,glass[i%4]);addBox(x,1.36,z,0.9,0.06,0.67,glass[(i+1)%4]);}
-  }
-  // A restrained atmospheric haze and cinematic color contrast.
-  scene.fog=new THREE.FogExp2(0x0a0d19,0.0072);
+  // a restrained atmospheric haze and cinematic color contrast
+  scene.fog=new THREE.FogExp2(0x0a0d19,0.0085);
 }
 
 // ---------- 1인칭 무기 모델 ----------
@@ -241,28 +172,6 @@ function buildWeapon(type) {
     for(let i=0;i<4;i++)part(w,[0.025,0.025,0.31],[-0.085+i*0.056,0.125,-0.15],i%2?pinkGlow:cyanGlow);
     part(w,[0.18,0.025,0.09],[0,0.19,0.03],greenGlow);
     part(w,[0.06,0.055,0.16],[0.04,0.16,0.1],dark);
-  }
-  if(['VANTA7','KRAIT4','ORACLEX'].includes(type)){
-    // Distinctive rifle silhouettes: skeletal stock, separate magazine, trigger guard, rail teeth and a real optic window.
-    const stockMat=mat(type==='KRAIT4'?0x18222b:0x101522,0x061f31,0.16);
-    part(w,[0.16,0.12,0.31],[0,0.005,0.34],stockMat,[0.02,0,0]);
-    part(w,[0.19,0.045,0.1],[0,0.025,0.48],mat(0x202630));
-    part(w,[0.095,0.23,0.14],[0,-0.19,0.12],stockMat,[0.14,0,0]);
-    part(w,[0.12,0.19,0.12],[0,-0.23,-0.01],dark,[0.12,0,0]);
-    // Magazine with bevel-like stacked plates and ribs
-    part(w,[0.105,0.23,0.16],[0,-0.235,-0.13],stockMat,[0.12,0,0]);
-    for(let r=0;r<4;r++)part(w,[0.11,0.018,0.17],[0,-0.17-r*0.045,-0.13],metal);
-    // Picatinny rail teeth on top
-    for(let r=0;r<9;r++)part(w,[0.055,0.025,0.055],[-0.08+r*0.02,0.19,-0.28+r*0.045],metal);
-    // Hooded holographic optic, lens faces toward the player; inner reticle remains visible in ADS.
-    part(w,[0.19,0.14,0.15],[0,0.28,-0.13],dark);
-    part(w,[0.15,0.105,0.018],[0,0.28,-0.214],new THREE.MeshPhysicalMaterial({color:0x4b9ba9,metalness:0.35,roughness:0.08,transparent:true,opacity:0.68,clearcoat:1}));
-    part(w,[0.018,0.13,0.035],[-0.095,0.28,-0.13],metal);part(w,[0.018,0.13,0.035],[0.095,0.28,-0.13],metal);
-    const sightColor=type==='ORACLEX'?greenGlow:type==='KRAIT4'?pinkGlow:cyanGlow;
-    part(w,[0.012,0.012,0.012],[0,0.28,-0.229],sightColor);
-    // Muzzle crown, side vents and bolts
-    for(let k=0;k<5;k++)part(w,[0.025,0.055,0.025],[-0.07+k*0.035,0.01,-0.56],metal);
-    for(const side of [-1,1])for(let k=0;k<3;k++)part(w,[0.018,0.025,0.055],[side*0.086,0.015,-0.2-k*0.08],k%2?sightColor:metal);
   }
   if(type==='ORACLEX'){part(w,[0.21,0.16,0.34],[0,0.13,-0.24],metal);part(w,[0.13,0.11,0.22],[0,0.17,-0.25],dark);part(w,[0.25,0.04,0.17],[0,0.24,-0.24],greenGlow);part(w,[0.07,0.07,0.18],[0,0.27,-0.24],cyanGlow);part(w,[0.14,0.06,0.26],[0,-0.12,0.2],greenGlow);}
   if(type==='KRAIT4'){part(w,[0.06,0.06,0.42],[0,-0.02,-0.50],metal);part(w,[0.20,0.07,0.16],[0,0.02,0.30],dark);part(w,[0.025,0.025,0.31],[0.09,0.035,-0.38],cyanGlow);part(w,[0.13,0.10,0.18],[0,0.11,-0.03],pinkGlow);part(w,[0.045,0.045,0.26],[0,-0.10,0.18],metal);}
