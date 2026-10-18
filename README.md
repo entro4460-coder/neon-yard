@@ -19,7 +19,7 @@ Upload this directory's contents to a GitHub repository. In Render create a Node
 
 ## Controls
 
-WASD move; mouse look; left click fire; right click ADS; R reload; 1/2/3 switch; Shift walk; Ctrl crouch; Space jump; E blast door; hold Tab scoreboard.
+WASD move; mouse look; left click fire; right click ADS; R reload; 1/2/3 switch; Shift sprint; Ctrl crouch; Space jump; E blast door; hold Tab scoreboard.
 
 ## Architecture
 
@@ -36,8 +36,18 @@ All visual geometry, texture generation, interface and synthesized audio in this
 
 ## Remaining before release
 
-Browser visual and input QA; real two-browser damage/reload/death/round-end checks; deployed Render verification; 60 FPS measurement; refined artist-created environment and weapon assets; complete enterable interiors and elevated paths; ramps/steps/crouch head clearance; full weapon animation and sound design; settings/loadout/profile; client movement prediction and reconciliation; lag compensation; input/event rate limiting; ammunition economy; stronger abuse protection and soak/load tests. Position is currently snapshot-smoothed rather than predicted. Server-authoritative vertical recoil now accumulates with firing, decays over time, and is reduced while aiming. Cosmetic model kick is separate. Reload uses a normalized magazine-out/in sequence; ADS centers the open optic. Visual browser QA is still pending. Graphics are an initial procedural production pass, not final art.
+Browser visual and input QA; real two-browser damage/reload/death/round-end checks; deployed Render verification; 60 FPS measurement; refined artist-created environment and weapon assets; further interior and elevated-route art polish; step and edge handling refinements; full weapon animation and sound design; settings/loadout/profile; client movement prediction and reconciliation; lag compensation; input/event rate limiting; ammunition economy; stronger abuse protection and soak/load tests. Position is currently snapshot-smoothed rather than predicted. Server-authoritative vertical recoil now accumulates with firing, decays over time, and is reduced while aiming. Cosmetic model kick is separate. Reload uses a normalized magazine-out/in sequence; ADS centers the open optic. Visual browser QA is still pending. Graphics are an initial procedural production pass, not final art.
 
 ## Weapon handling update
 
 Replace `public/game.js`, `shared/game.js`, and `server/index.js` together. No Render command changes are needed. Tests add recoil/reload checks. Four tests pass. GitHub integration could read the repository but branch creation returned HTTP 403, so this update has not been pushed or deployed.
+
+## v0.3 — interiors and movement
+
+Normal movement remains 5.5 world units/second; Shift sprints at 8. Crouch remains 2; ADS prevents the sprint boost. No change to firing cadence or reload duration. Reload adds eased magazine withdrawal/insertion, support hand travel, seating impulse and bolt pull/return.
+
+BLACK MARKET and IRONWORKS now have actual entrance gaps and interiors. IRONWORKS has a ramp up to a gallery; both directions pass simulation tests. E within four units of the factory console toggles its rotor and lamp for every client. Procedural shelves, panels, strip lights and warning markings are added.
+
+Seven automated tests pass, including baseline/sprint/crouch/ADS speeds, ramp ascent/descent, recoil/reload stages, wall collision and two-client reconnect. Browser visual QA remains unverified because the available test browser disables WebGL. This is a development update, not final environment art. Railings are visual only; take care around gallery edges. Server ray tests include gallery cover; ramp surfaces currently are movement surfaces and do not occlude shots. These limitations need work before release.
+
+Upload this archive's contents to the repository root, replacing existing paths. At minimum replace `public/index.html`, `public/game.js`, `shared/game.js`, `server/index.js` together; tests and README are also updated. Keep existing Render build/start settings. Prior v0.2 and v0.1 archives remain separate rollback checkpoints. This update has not been pushed to GitHub or deployed.
