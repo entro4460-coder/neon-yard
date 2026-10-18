@@ -5,23 +5,25 @@ const finishes={
  ceramic:new T.MeshStandardMaterial({color:0x9ca6a7,metalness:.32,roughness:.38}),
  steel:new T.MeshStandardMaterial({color:0x657781,metalness:.92,roughness:.22}),
  rubber:new T.MeshStandardMaterial({color:0x10161c,metalness:.02,roughness:.86}),
- accent:new T.MeshStandardMaterial({color:0x9c6144,metalness:.5,roughness:.4})
+ accent:new T.MeshStandardMaterial({color:0x9c6144,metalness:.5,roughness:.4}),
+ lime:new T.MeshStandardMaterial({color:0x9aab42,metalness:.42,roughness:.38}),
+ white:new T.MeshStandardMaterial({color:0xc4cac6,metalness:.40,roughness:.30})
 };
 export function createWeapon(index,materials){
  const gun=new T.Group();gun.name=['VANTA-7','KRAIT-4','ORACLE-X'][index];
- const {armor,ceramic,steel,rubber,accent}=finishes,light=materials.cyan;
+ const {armor,ceramic,steel,rubber,accent,lime,white}=finishes,light=materials.cyan;
  const add=(g,m,x=0,y=0,z=0,parent=gun)=>{const mesh=new T.Mesh(g,m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;};
  const box=(x,y,z,w,h,d,m=armor,parent=gun)=>add(new RoundedBoxGeometry(w,h,d,2,Math.min(.014,w*.16,h*.16,d*.16)),m,x,y,z,parent);
  function profile(points,width,m=armor,x=0,y=0,z=0,parent=gun){const shape=new T.Shape();points.forEach(([long,up],i)=>i?shape.lineTo(long,up):shape.moveTo(long,up));shape.closePath();const g=new T.ExtrudeGeometry(shape,{depth:width,bevelEnabled:true,bevelSegments:3,bevelSize:.009,bevelThickness:.008,steps:1});g.translate(0,0,-width/2);g.rotateY(-Math.PI/2);return add(g,m,x,y,z,parent);}
  const tube=(x,y,z,r,l,m=steel,open=false,parent=gun)=>{const o=add(new T.CylinderGeometry(r,r,l,20,1,open),m,x,y,z,parent);o.rotation.x=Math.PI/2;return o;};
  const ring=(x,y,z,r,th=.008,m=steel,parent=gun)=>add(new T.TorusGeometry(r,th,8,28),m,x,y,z,parent);
  const profiles=[
- [[-.53,-.07],[-.49,.045],[-.35,.105],[.24,.105],[.36,.02],[.28,-.13],[.04,-.14],[-.04,-.06]],
+ [[-.79,-.045],[-.76,.06],[-.39,.09],[.24,.09],[.32,.025],[.25,-.105],[-.03,-.115],[-.12,-.055]],
  [[-.34,-.07],[-.34,.08],[-.22,.13],[.23,.10],[.29,.025],[.19,-.115],[.02,-.115],[-.10,-.055]],
  [[-.71,-.04],[-.63,.04],[-.37,.085],[.30,.085],[.38,.01],[.26,-.12],[-.02,-.12],[-.14,-.045]]
  ];
  profile(profiles[index],index===1?.19:.165);
- const front=[-.54,-.35,-.74][index],muzzleZ=[-.94,-.65,-1.29][index];
+ const front=[-.80,-.35,-.74][index],muzzleZ=[-1.05,-.65,-1.29][index];
  tube(0,-.015,(front+muzzleZ)/2,index===2?.027:.034,front-muzzleZ,steel);
  tube(0,-.015,muzzleZ+.035,index===2?.044:.057,.09,armor,true);ring(0,-.015,muzzleZ-.012,index===2?.044:.057,.007,steel);
  // Coherent outer armor follows receiver lines, leaving seams and a separate lower receiver.
@@ -40,12 +42,21 @@ export function createWeapon(index,materials){
  // Magazine profiles now distinguish curved rifle, straight SMG and short precision box.
  const magazine=new T.Group();magazine.position.set(0,-.23,-.1);magazine.rotation.x=.15;gun.add(magazine);
  const magPoints=index===0?[[-.09,.08],[.09,.08],[.10,-.12],[.17,-.32],[.02,-.35],[-.06,-.13]]:index===1?[[-.055,.07],[.055,.07],[.065,-.32],[-.055,-.32]]:[[-.08,.07],[.08,.07],[.08,-.14],[-.08,-.14]];
- profile(magPoints,index===1?.082:.105,armor,0,0,0,magazine);
+ profile(magPoints,index===1?.082:.105,index===0?lime:armor,0,0,0,magazine);
  for(let i=0;i<4;i++)box(.058,-.07-i*.045,index===0?.01+i*.018:0,.008,.015,index===1?.065:.1,rubber,magazine);
  if(index===0){
-  profile([[-.58,-.065],[-.55,.06],[-.36,.095],[-.22,.04],[-.24,-.075]],.18,ceramic);
-  for(const side of [-1,1])for(let n=0;n<5;n++)box(side*.102,.015,-.50+n*.045,.007,.026,.025,rubber);
-  profile([[.31,.035],[.58,.02],[.69,-.03],[.67,-.16],[.54,-.20],[.35,-.10]],.12,armor);box(0,-.08,.69,.14,.23,.035,rubber);box(0,.075,.47,.105,.055,.20,ceramic);
+  // Reference-led long, low-profile shroud with a white receiver band.
+  profile([[-.80,-.045],[-.77,.055],[-.35,.075],[-.24,.035],[-.27,-.055]],.175,white);
+  for(const side of [-1,1]){
+   profile([[-.71,-.025],[-.69,.027],[-.34,.04],[-.29,-.008],[-.34,-.035]],.012,rubber,side*.098);
+   for(let n=0;n<6;n++)box(side*.107,.006,-.68+n*.055,.009,.025,.023,steel);
+   profile([[-.24,-.025],[-.21,.06],[.18,.06],[.26,.015],[.15,-.035]],.012,white,side*.103);
+   box(side*.116,-.01,.06,.01,.065,.12,lime);
+  }
+  // Open split stock, cheek rest and shoulder pad keep the silhouette airy.
+  for(const side of [-1,1]){box(side*.058,.005,.44,.024,.033,.30,steel);box(side*.052,-.095,.44,.023,.033,.28,armor);}
+  box(0,.075,.48,.13,.055,.24,white);box(0,-.05,.62,.16,.23,.045,rubber);
+  box(0,-.005,-.91,.08,.09,.10,armor);
  }else if(index===1){
   // Compact enclosed forward shroud and split skeletal shoulder frame.
   profile([[-.43,-.06],[-.43,.065],[-.30,.11],[-.19,.045],[-.22,-.065]],.21,armor);
@@ -57,7 +68,8 @@ export function createWeapon(index,materials){
  }
  // Rail teeth, sight mount and a clear center line at y=.21 for ADS.
  for(let n=0;n<9;n++)box(0,.119,-.27+n*.049,.105,.014,.022,steel);
- if(index===2){tube(0,.21,-.09,.066,.32,armor,true);for(const z of [-.25,.07])ring(0,.21,z,.067,.01,steel);box(.09,.23,-.08,.045,.065,.06,steel);box(0,.135,-.09,.045,.08,.05,steel);}
+ if(index===0){tube(0,.21,-.045,.043,.27,armor,true);for(const z of [-.18,.09])ring(0,.21,z,.044,.007,steel);box(0,.135,-.05,.035,.08,.06,steel);box(0,.26,-.05,.045,.025,.05,lime);}
+ else if(index===2){tube(0,.21,-.09,.066,.32,armor,true);for(const z of [-.25,.07])ring(0,.21,z,.067,.01,steel);box(.09,.23,-.08,.045,.065,.06,steel);box(0,.135,-.09,.045,.08,.05,steel);}
  else {const sight=ring(0,.21,.025,index===1?.044:.05,.009,armor);sight.scale.y=.86;box(0,.14,.025,.035,.07,.035,steel);}
  box(0,.21,-.27,.009,.012,.015,light);
  const bolt=box(.109,.065,.12,.045,.035,.12,steel);

@@ -15,7 +15,7 @@ export function createCity(scene,materials){
  const amber=new T.MeshStandardMaterial({color:0xd2a07b,emissive:0xc17748,emissiveIntensity:.9,roughness:.3});
  function sign(text,subtitle,x,y,z,w,h,rotation=0,color='#a9ded8'){
   const c=document.createElement('canvas');c.width=1024;c.height=256;const ctx=c.getContext('2d');ctx.fillStyle='#0c151f';ctx.fillRect(0,0,1024,256);ctx.fillStyle=color;ctx.font='600 94px Arial, sans-serif';ctx.textAlign='center';ctx.fillText(text,512,125);ctx.fillStyle='#91a4ac';ctx.font='24px Arial';ctx.letterSpacing='6px';ctx.fillText(subtitle,512,192);ctx.fillStyle=color;ctx.fillRect(60,221,904,3);
-  const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.65,roughness:.6}));m.position.set(x,y,z);m.rotation.y=rotation;root.add(m);
+  const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:2.1,roughness:.6}));m.position.set(x,y,z);m.rotation.y=rotation;root.add(m);
  }
  for(const b of cityBlocks){
   const top=b.base+b.height;
