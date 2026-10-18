@@ -1,7 +1,7 @@
 {
-  "name": "neon-yard",
+  "name": "vandal-fps",
   "version": "1.0.0",
-  "description": "NEON YARD - browser-based online multiplayer FPS (Three.js + Express + Socket.IO)",
+  "description": "VANDAL - browser-based online multiplayer FPS (Three.js + Express + Socket.IO)",
   "main": "server.js",
   "scripts": { "start": "node server.js", "dev": "node server.js" },
   "engines": { "node": ">=18" },

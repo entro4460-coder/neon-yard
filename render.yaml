@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: neon-yard
+    name: vandal
     runtime: node
     plan: free
     buildCommand: npm install

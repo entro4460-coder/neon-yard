@@ -31,6 +31,7 @@ app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res, p) =>
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 2e3, pingInterval: 10000, pingTimeout: 8000, cors: { origin: false } });
 const players = new Map(), ipCount = new Map();
+let arcadeDoorOpen = false;
 const num = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
 const r2 = (v) => Math.round(v * 100) / 100;
 const ipOf = (s) => (s.handshake.headers['x-forwarded-for'] || s.handshake.address || '').toString().split(',')[0].trim();
@@ -72,10 +73,16 @@ io.on('connection',(socket)=>{
     const reply=typeof ack==='function'?ack:()=>{};if(players.has(socket.id))return reply({ok:false,error:'이미 참가 중입니다.'});if(players.size>=MAX_PLAYERS)return reply({ok:false,error:`서버가 가득 찼습니다 (${MAX_PLAYERS}명).`});
     const name=validName(data&&data.name);if(!name)return reply({ok:false,error:'닉네임은 2~16자 (한글/영문/숫자/_/-) 이어야 합니다.'});if(nameTaken(name))return reply({ok:false,error:'이미 사용 중인 닉네임입니다.'});
     const sp=pickSpawn(socket.id),loadout=safeLoadout(data&&data.loadout),p={id:socket.id,sock:socket,name,x:sp[0],y:sp[1],z:sp[2],ry:0,pitch:0,anim:0,hp:HP,alive:true,kills:0,deaths:0,loadout,weapon:loadout.rifle,ammo:{[loadout.rifle]:30,[loadout.pistol]:7},reserve:{[loadout.rifle]:120,[loadout.pistol]:42},reloading:false,reloadTimer:null,lastShot:{VANTA7:0,KRAIT4:0,ORACLEX:0,DEAGLE_BLACK:0,DEAGLE_WHITE:0,GURKHA:0,FIELD_KNIFE:0},lastMove:Date.now(),moves:0,moveWin:Date.now()};
-    players.set(socket.id,p);reply({ok:true,id:p.id,spawn:sp,hp:HP,...ammoPayload(p),players:[...players.values()].map(q=>({...pub(q),x:q.x,y:q.y,z:q.z,ry:q.ry}))});
+    players.set(socket.id,p);reply({ok:true,id:p.id,spawn:sp,hp:HP,...ammoPayload(p),players:[...players.values()].map(q=>({...pub(q),x:q.x,y:q.y,z:q.z,ry:q.ry}))});socket.emit('doorState',{id:'vandal_arcade',open:arcadeDoorOpen});
     socket.broadcast.emit('joined',{...pub(p),x:p.x,y:p.y,z:p.z,ry:0});io.emit('board',board());broadcastOnline();
   });
   socket.on('move',(m)=>{const p=players.get(socket.id);if(!p||!p.alive||!m)return;const now=Date.now();if(now-p.moveWin>1000){p.moveWin=now;p.moves=0;}if(++p.moves>60)return;if(!num(m.x,-MAP.bounds,MAP.bounds)||!num(m.y,-5,30)||!num(m.z,-MAP.bounds,MAP.bounds)||!num(m.ry,-1000,1000)||!num(m.pitch,-2,2))return;const dt=Math.min(Math.max((now-p.lastMove)/1000,0.016),0.5);p.lastMove=now;const dist=Math.hypot(m.x-p.x,m.z-p.z);if(dist>13*dt+0.6){socket.emit('correct',{x:p.x,y:p.y,z:p.z});return;}p.x=Math.max(-MAP.bounds,Math.min(MAP.bounds,m.x));p.z=Math.max(-MAP.bounds,Math.min(MAP.bounds,m.z));p.y=m.y;p.ry=m.ry;p.pitch=m.pitch;p.anim=m.anim===1||m.anim===2?m.anim:0;p.crouched=m.crouched===true;});
+  socket.on('interactDoor',(d)=>{
+    const p=players.get(socket.id);if(!p||!p.alive||!d||d.id!=='vandal_arcade')return;
+    // Server validates proximity so a remote client cannot toggle the door from anywhere.
+    if(Math.hypot(p.x,p.z+24.3)>4.0||p.y>2.5)return;
+    arcadeDoorOpen=!arcadeDoorOpen;io.emit('doorState',{id:'vandal_arcade',open:arcadeDoorOpen,by:p.id});
+  });
   socket.on('weapon',(d)=>{const p=players.get(socket.id);if(!p||!p.alive||!d||!['rifle','pistol','knife'].includes(d.slot))return;clearTimeout(p.reloadTimer);p.reloading=false;p.weapon=p.loadout[d.slot];p.sock.emit('weapon',ammoPayload(p));});
   socket.on('reload',()=>{const p=players.get(socket.id);if(p)startReload(p);});
   socket.on('shoot',(d)=>{
@@ -97,4 +104,4 @@ io.on('connection',(socket)=>{
 });
 setInterval(()=>{if(!players.size)return;const s=[];for(const p of players.values())s.push([p.id,r2(p.x),r2(p.y),r2(p.z),r2(p.ry),r2(p.pitch),p.anim,p.alive?1:0]);io.volatile.emit('state',s);},50);
 process.on('uncaughtException',(e)=>console.error('uncaught',e));process.on('unhandledRejection',(e)=>console.error('unhandled',e));
-server.listen(PORT,'0.0.0.0',()=>console.log(`NEON YARD listening on :${PORT} (max ${MAX_PLAYERS} players)`));
+server.listen(PORT,'0.0.0.0',()=>console.log(`VANDAL listening on :${PORT} (max ${MAX_PLAYERS} players)`));

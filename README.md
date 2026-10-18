@@ -1,27 +1,35 @@
-# NEON YARD — Browser FPS V4: Cyber City + Toggle ADS
+# VANDAL — Visual Overhaul Prototype
 
-Three.js + Express + Socket.IO 기반 브라우저 온라인 FPS 프로토타입.
+Three.js + Express + Socket.IO browser FPS. The project includes `data/map.json` for collision and spawn data. Visual facade dressing and procedural pixel-paint textures are generated in `public/main.js`.
 
-## 이번 빌드
-- 기존 `map.json`을 참조하지 않고 새로 생성한 `data/map.json`으로 소형 사이버펑크 도시 전장 구성
-- 도로, 보도, 발광 창문, 옥상 장비, 네온 간판, 가로등, 엄폐물 등 절차적 3D 도시 디테일 추가
-- 소총의 게임 내 이름과 디자인 개성 변경: VANTA-7 / KRAIT-4 / ORACLE-X
-- 우클릭 토글형 도트 조준 전환: 눌러 켜고 다시 눌러 끔
-- 조준 전환 중 카메라 FOV와 1인칭 총 위치가 부드럽게 보간
-- 기존 서버 권한 기반 총격, 리스폰, 킬보드, 로비 흐름 유지하는 방향으로 수정
+## Run
 
-## 실행
 ```bash
 npm install
 npm start
 ```
-브라우저에서 `http://localhost:3000` 접속. 데스크톱 Chrome/Edge 권장.
 
-## 조작
-- WASD 이동, Shift 달리기, Space 점프, Ctrl 웅크리기
-- 마우스 시점, 좌클릭 사격
-- 우클릭: 도트 조준 토글
-- 1 소총 / 2 권총 / 3 칼, R 재장전, Tab 킬보드, Esc 마우스 해제
+Open `http://localhost:3000` in Chrome or Edge.
 
-## 주의
-이 빌드는 코드로 생성한 절차적 3D 메시를 사용하며, 전문 아티스트가 제작한 고해상도 스캔/텍스처 기반 에셋과 동일한 품질을 보장하지 않습니다. 브라우저와 실제 멀티플레이에서 플레이테스트가 필요합니다. 조준 애니메이션은 기본 보간형 프로토타입이며 무기별 전용 애니메이션/시각적 도트 옵틱 정렬은 후속 튜닝 대상입니다.
+## Controls
+
+- WASD move, Shift sprint, Space jump, Ctrl crouch
+- Mouse look, left click fire
+- Right click toggles ADS (rifle)
+- E opens/closes the VANDAL ARCADE door when standing near its entrance
+- 1 / 2 / 3 switch rifle / pistol / knife
+- R reload, Tab scoreboard, Esc releases pointer lock
+
+## Visual pass
+
+- New compact cyberpunk street layout, storefronts, illuminated signs, facade rails, roof HVAC, cables, puddles, grates and street props
+- More differentiated rifle silhouettes with receiver plates, magazine ribs, rail teeth, optic housing, muzzle crown and side vents
+- ACES tone mapping and sRGB output for improved browser rendering
+
+This is still a procedural Three.js asset pass, not a hand-authored AAA asset pack. Test locally and tune for your target device/browser. Existing server-authoritative multiplayer and weapon handling code are retained as far as possible.
+
+
+## VANDAL visual/interaction update
+- Added pixel-painted procedural facade textures using nearest-neighbor sampling.
+- Added an enterable VANDAL ARCADE ground-floor interior and a network-synchronized hinged door toggled with E near the entrance.
+- Replaced one full-building collision volume with wall segments around the doorway so the entrance is physically accessible.
