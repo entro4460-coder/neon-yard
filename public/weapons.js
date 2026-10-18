@@ -72,7 +72,38 @@ export function createWeapon(index,materials){
  else if(index===2){tube(0,.21,-.09,.066,.32,armor,true);for(const z of [-.25,.07])ring(0,.21,z,.067,.01,steel);box(.09,.23,-.08,.045,.065,.06,steel);box(0,.135,-.09,.045,.08,.05,steel);}
  else {const sight=ring(0,.21,.025,index===1?.044:.05,.009,armor);sight.scale.y=.86;box(0,.14,.025,.035,.07,.035,steel);}
  box(0,.21,-.27,.009,.012,.015,light);
- const bolt=box(.109,.065,.12,.045,.035,.12,steel);
+
+ // Individual serviceable parts, rather than surface rivets alone.
+ const port=box(.117,.025,-.015,.009,.055,.13,rubber);port.name='ejection-port';
+ const portLip=box(.124,.057,-.015,.012,.010,.145,steel);portLip.name='ejection-port-lip';
+ const selector=box(.125,-.075,.17,.015,.018,.055,accent);selector.rotation.x=-.35;selector.name='fire-selector';
+ const release=box(.12,-.115,-.065,.012,.035,.04,steel);release.name='magazine-release';
+ const charging=box(.14,.075,.14,.055,.032,.05,steel);charging.name='charging-handle';
+ for(const side of [-1,1])for(let n=0;n<3;n++){const screw=tube(side*.132,-.025,-.12+n*.09,.010,.012,rubber);screw.rotation.z=Math.PI/2;}
+ const mount=box(0,.14,-.10,.10,.025,.22,steel);mount.name='optic-mount';
+ if(index===0){
+  const gas=box(0,.038,-.91,.085,.045,.07,steel);gas.name='gas-block';
+  for(let n=0;n<4;n++)ring(0,-.015,-.99+n*.018,.044,.004,steel);
+  for(const side of [-1,1])box(side*.121,-.017,-.48,.012,.014,.16,light);
+  const stockLock=box(.082,.005,.36,.025,.06,.08,lime);stockLock.name='stock-lock';
+ }else if(index===1){
+  // Short ported muzzle, copper heat shield and compact angled foregrip.
+  for(const side of [-1,1])for(let n=0;n<3;n++)box(side*.058,-.015,-.59+n*.025,.008,.035,.014,rubber);
+  profile([[-.41,-.045],[-.35,.025],[-.24,.025],[-.22,-.035],[-.30,-.075]],.012,accent,.119);
+  const foregrip=profile([[-.33,-.07],[-.24,-.08],[-.27,-.22],[-.34,-.25],[-.37,-.21]],.08,rubber);foregrip.name='angled-foregrip';
+  for(let n=0;n<5;n++)box(0,.115,-.35+n*.025,.12,.014,.012,steel);
+  const latch=box(.09,-.035,.44,.03,.06,.065,accent);latch.name='stock-lock';
+ }else{
+  // Objective bell, focus collar, windage/elevation and split precision barrel sleeve.
+  const objective=tube(0,.21,-.31,.079,.14,armor,true);objective.name='objective-bell';
+  for(let n=0;n<5;n++)ring(0,.21,-.26+n*.014,.076,.004,steel);
+  const turret=tube(0,.29,-.08,.029,.065,steel);turret.rotation.x=0;turret.name='elevation-turret';
+  const windage=tube(.105,.22,-.08,.026,.04,steel);windage.rotation.set(0,0,Math.PI/2);windage.name='windage-turret';
+  for(let n=0;n<5;n++)ring(0,-.015,-1.16+n*.045,.034,.004,steel);
+  box(.09,-.02,.53,.018,.065,.18,rubber);for(const side of [-1,1])box(side*.082,-.08,.70,.025,.13,.045,steel);
+  const bipodHinge=tube(0,-.07,-.55,.04,.10,steel);bipodHinge.rotation.set(0,0,Math.PI/2);bipodHinge.name='bipod-hinge';
+ }
+ const bolt=box(.109,.065,.12,.045,.035,.12,steel);bolt.name='bolt-carrier';magazine.name='removable-magazine';
  function glove(x,y,z,parent=gun){const hand=new T.Group();hand.position.set(x,y,z);parent.add(hand);box(0,0,0,.12,.105,.15,rubber,hand);box(.01,.055,.005,.10,.025,.10,armor,hand);for(let f=0;f<4;f++){const finger=add(new T.CapsuleGeometry(.014,.055,3,6),rubber,-.043+f*.029,-.014,-.073,hand);finger.rotation.x=1.15;}const thumb=box(.07,-.012,0,.035,.045,.07,rubber,hand);thumb.rotation.z=-.5;return hand;}
  const supportHand=glove(-.07,-.14,-.34);const firingHand=glove(.08,-.31,.25);
  // Sleeves connect to each palm instead of floating beneath the weapon.

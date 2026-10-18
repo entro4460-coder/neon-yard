@@ -1,7 +1,9 @@
+import {districtWalls,districtSolids,districtPlatforms,districtRamps} from './district.js';
 import {cityBlocks} from './city.js';
 export const weapons=[{name:'VANTA-7',mag:30,rate:110,damage:28,reload:1800,spread:.008},{name:'KRAIT-4',mag:36,rate:72,damage:19,reload:1400,spread:.016},{name:'ORACLE-X',mag:8,rate:800,damage:85,reload:2300,spread:.001}];
 // Shared collision geometry: walls have real entrance gaps.
 export const boxes=[
+ ...districtWalls,...districtSolids,
  ...cityBlocks.map(b=>[b.x,b.base+b.height/2,b.z,b.w,b.height,b.d]),
  [-19,3,-5,.5,6,18],[-15,3,-14,8,6,.5],[-15,3,4,8,6,.5],
  [-11,3,-11,.5,6,6],[-11,3,1,.5,6,6],[-15,6,-5,8,.3,18],
@@ -9,14 +11,15 @@ export const boxes=[
  [11,4,-1,.5,8,6],[11,4,11,.5,8,6],[15,8,5,8,.3,18],
  [-16,1,-8,4,2,1],[-17,1,-1,2,2,2],[16,1.4,9,3,2.8,3],
  [-6,1.2,0,3,2.4,3],[6,1.2,-6,3,2.4,5],[0,2,10,5,4,4],[0,1,-12,4,2,3],
- [-24,5,0,2,10,52],[24,5,0,2,10,52],[0,5,-26,50,10,2],[0,5,26,50,10,2]
+
 ];
-export const platforms=[{x:15,z:8,w:7,d:6,y:3}];
-export const ramps=[{x:15,z:2,w:3,d:6,low:0,high:3}];
+export const platforms=[{x:15,z:8,w:7,d:6,y:3},...districtPlatforms];
+export const ramps=[{x:15,z:2,w:3,d:6,low:0,high:3},...districtRamps];
 // Physical rail bars/posts also drive rendering and hitscan.
 export const rails=[];
 for(const p of platforms){
- const segments=[[p.x-p.w/2,p.z,.06,p.d],[p.x+p.w/2,p.z,.06,p.d],[p.x,p.z+p.d/2,p.w,.06],[12.5,p.z-p.d/2,2,.06],[17.5,p.z-p.d/2,2,.06]];
+ const left=p.x-p.w/2,right=p.x+p.w/2,entry=p.entryX??p.x,gap=p.entryWidth??3;
+ const segments=[[left,p.z,.06,p.d],[right,p.z,.06,p.d],[p.x,p.z+p.d/2,p.w,.06],[(left+entry-gap/2)/2,p.z-p.d/2,entry-gap/2-left,.06],[(entry+gap/2+right)/2,p.z-p.d/2,right-entry-gap/2,.06]];
  for(const [x,z,w,d] of segments){for(const y of [.45,1])rails.push([x,p.y+y,z,w,.06,d]);const n=Math.max(1,Math.ceil(Math.max(w,d)/1.5));for(let i=0;i<=n;i++)rails.push([x+(w>.1?(i/n-.5)*w:0),p.y+.5,z+(d>.1?(i/n-.5)*d:0),.05,1,.05]);}
 }
 export function rayRamp(o,d,p){
